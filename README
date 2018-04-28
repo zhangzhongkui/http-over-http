@@ -5,5 +5,7 @@ cd http-over-http/
 autoreconf -if
 ./configure --prefix=/opt/ats --enable-example-plugins
 make
+make examples
 make install
+make install-examples
 
