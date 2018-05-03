@@ -9,3 +9,13 @@ make examples
 make install
 make install-examples
 
+
+cmd used for internal CA:
+openssl genrsa -out rootCA.key 2048
+openssl req -new -x509 -key rootCA.key -out rootCA.crt -subj '/C=DK/L=Aarhus/O=frogger CA/CN=thomas.com' -days 999
+
+openssl genrsa -out example.org.key 2048
+openssl req -new -key example.org.key -out example.org.csr -subj '/C=DK/L=Aarhus/O=frogger CA/CN=google.com'
+openssl x509 -req -in example.org.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out example.org.crt
+
+
