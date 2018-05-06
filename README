@@ -3,19 +3,12 @@
 git clone https://github.com/zhangzhongkui/http-over-http.git
 cd http-over-http/
 autoreconf -if
-./configure --prefix=/opt/ats --enable-example-plugins
+./configure --prefix=/opt/ats
 make
-make examples
 make install
-make install-examples
 
+su
+cd example/thomas_https
+./build.sh
 
-cmd used for internal CA:
-openssl genrsa -out rootCA.key 2048
-openssl req -new -x509 -key rootCA.key -out rootCA.crt -subj '/C=DK/L=Aarhus/O=frogger CA/CN=thomas.com' -days 999
-
-openssl genrsa -out example.org.key 2048
-openssl req -new -key example.org.key -out example.org.csr -subj '/C=DK/L=Aarhus/O=frogger CA/CN=google.com'
-openssl x509 -req -in example.org.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out example.org.crt
-
-
+On client browser, import /opt/ats/etc/trafficserver/ssl/rootCA.crt to trust CA
