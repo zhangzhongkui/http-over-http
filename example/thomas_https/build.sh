@@ -24,7 +24,7 @@ cat /dev/null > ${INSTALL_DIR}/var/log/trafficserver/error.log
 rm -fr ${INSTALL_DIR}/var/log/trafficserver/crash*
 rm -fr ${INSTALL_DIR}/var/log/trafficserver/*old
 
-
+${INSTALL_DIR}/bin/trafficserver restart
 ${INSTALL_DIR}/bin/traffic_ctl config set proxy.config.ssl.server.cert.path etc/trafficserver/ssl
 ${INSTALL_DIR}/bin/traffic_ctl config set proxy.config.ssl.server.private_key.path  etc/trafficserver/ssl
 ${INSTALL_DIR}/bin/traffic_ctl config set proxy.config.admin.user_id "#-1"
