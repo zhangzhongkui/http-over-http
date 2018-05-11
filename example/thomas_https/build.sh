@@ -67,4 +67,5 @@ then
 fi
 cp ./create_cert.sh ${INSTALL_DIR}/etc/trafficserver/ssl/create_cert.sh
 
-#${INSTALL_DIR}/bin/trafficserver restart
+sleep 10
+${INSTALL_DIR}/bin/trafficserver restart
