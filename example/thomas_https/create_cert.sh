@@ -16,7 +16,7 @@ fi
 cd $BASEPATH
 CACHE_DIR=${BASEPATH}cert_cache/
 
-[ -f ${CACHE_DIR}${COMMON_NAME}.crt ] && [ -f ${CACHE_DIR}${COMMON_NAME}.key ] echo "exist" && exit 0
+#[ -f ${CACHE_DIR}${COMMON_NAME}.crt ] && [ -f ${CACHE_DIR}${COMMON_NAME}.key ] echo "exist" && exit 0
 
 CACHE_SIZE=`du ${CACHE_DIR}| awk '{print $1}'`
 if [[ ${CACHE_SIZE} > 10000 ]]
