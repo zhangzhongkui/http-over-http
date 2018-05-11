@@ -323,7 +323,7 @@ CB_servername(TSCont /*contp*/, TSEvent /*event*/, void *edata)
     UNIQ_PTR up_cache_path = path_join(cert_dir, "cert_cache");
     UNIQ_PTR up_key = path_join(up_cache_path.get(), str_join(server_name, ".key").get());
     UNIQ_PTR up_crt = path_join(up_cache_path.get(), str_join(server_name, ".crt").get());
-    if (true/*!is_file_exist(up_key.get(), nullptr, R_OK) || !is_file_exist(up_crt.get(), nullptr, R_OK)*/){
+    if (!is_file_exist(up_key.get(), nullptr, R_OK) || !is_file_exist(up_crt.get(), nullptr, R_OK)){
       UNIQ_PTR up = str_join(cert_dir, "create_cert.sh ");
       up = str_join(up.get(), server_name);
       int ret = system(up.get());
