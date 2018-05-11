@@ -27,6 +27,6 @@ fi
 
 openssl genrsa -out "${CACHE_DIR}${COMMON_NAME}.key" 2048
 openssl req -new -key "${CACHE_DIR}${COMMON_NAME}.key" -out "${CACHE_DIR}${COMMON_NAME}.csr" -subj "/C=DK/L=Aarhus/O=frogger CA/CN=${COMMON_NAME}"
-openssl x509 -req -in "${CACHE_DIR}${COMMON_NAME}.csr" -CA ${BASEPATH}rootCA.crt -CAkey ${BASEPATH}rootCA.key -CAcreateserial -out "${CACHE_DIR}${COMMON_NAME}.crt"
+openssl x509 -req -in "${CACHE_DIR}${COMMON_NAME}.csr" -CA ${BASEPATH}rootCA.crt -CAkey ${BASEPATH}rootCA.key -CAcreateserial -out "${CACHE_DIR}${COMMON_NAME}.crt" -days 365
 rm -f ${CACHE_DIR}${COMMON_NAME}.csr
 exit $?
