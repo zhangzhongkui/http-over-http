@@ -1,14 +1,30 @@
+It is not a joke, it is HTTP over HTTP. 
 
 
-git clone https://github.com/zhangzhongkui/http-over-http.git
-cd http-over-http/
-autoreconf -if
-./configure --prefix=/opt/ats
-make
-make install
+1. Mannually build steps:
+  git clone https://github.com/zhangzhongkui/http-over-http.git
+  cd http-over-http/
+  autoreconf -if
+  ./configure --prefix=/opt/ats
+  make
+  make install
 
-su
-cd example/thomas_https
-./build.sh
 
-On client browser, import /opt/ats/etc/trafficserver/ssl/rootCA.crt to trust CA
+  cd example/thomas_https
+  ./build.sh
+
+  cd example/thomas_remap
+  ./build.sh client (or server)
+
+  On client browser, import /opt/ats/etc/trafficserver/ssl/rootCA.crt to trust CA
+
+2. Docker iamges [recommended]
+2.1 set up client end
+  docker run -dit -p 9090:8080 tzhangshare/hoh-client
+  dcker attach [container ID]
+  install /opt/ats/etc/trafficserver/rootCA.crt for your browser.
+  vim /opt/ats/etc/trafficserver/plugin.config to change the default IP [10.203.108.10] to your server end IP
+  ctl+p, ctl+q to exit
+2.2 set up server end
+  docker run -dit -p 8080:8080 -p 443:443 tzhangshare/hoh-server
+
