@@ -7,8 +7,6 @@
 #include "ts/ink_defs.h"
 #include "ts/ink_inet.h"
 
-#include "thomas_lib.hh"
-
 #define PLUGIN_NAME "thomas_remap"
 #define VIA_VER "http/1.1 "
 
@@ -16,12 +14,21 @@
 std::string keyword;
 std::string hoh_server;
 IpEndpoint hoh_server_addr;
+IpEndpoint hohs_server_addr;
 int hoh_server_port;
+int hohs_server_port;
 bool hoh_server_mode;
 std::unordered_map<std::string, std::string> host_remap;
 
-static std::string get_via_str(std::string host);
+enum THOMAS_SCHEME{
+  THOMAS_HTTP,
+  THOMAS_HTTPS,
+  THOMAS_FTP,
+  THOMAS_FTPS,
+  THOMAS_UNKONW
+};
 
+static std::string get_via_str(std::string host);
 static std::string get_hostname_from_via_str(std::string via);
 
 static void
@@ -228,29 +235,73 @@ get_hostname_from_via_str(std::string via){
   return ret.substr(0, end);
 }
 
+static THOMAS_SCHEME
+get_scheme(TSMBuffer req_bufp, TSMLoc req_loc){
+  THOMAS_SCHEME ret = THOMAS_UNKONW;
+  TSMLoc url_loc = TS_NULL_MLOC;
+  do { 
+    if (TSHttpHdrUrlGet(req_bufp, req_loc, &url_loc) == TS_SUCCESS) {
+      TSDebug(PLUGIN_NAME, "retrieve scheme from URL");
+      const char* p_scheme;
+      int scheme_len;
+      if ((p_scheme = TSUrlSchemeGet(req_bufp, url_loc, &scheme_len)) == NULL) {
+        TSDebug(PLUGIN_NAME, "scheme NOT found in url");
+        break;
+      } 
+      std::string sc(p_scheme, scheme_len);
+      TSDebug(PLUGIN_NAME, "scheme %s", sc.c_str());
+      if (strncmp(p_scheme, "http", scheme_len) == 0 && strlen("http") == scheme_len){
+        ret = THOMAS_HTTP;
+      } else if (strncmp(p_scheme, "https", scheme_len) == 0 && strlen("https") == scheme_len){
+        ret = THOMAS_HTTPS;
+      } else if (strncmp(p_scheme, "ftp", scheme_len) == 0 && strlen("ftp") == scheme_len){
+        ret = THOMAS_FTP;
+      } else if (strncmp(p_scheme, "ftps", scheme_len) == 0 && strlen("ftps") == scheme_len){
+        ret = THOMAS_FTPS;
+      }
+    } 
+  } while(0);
+  
+  TSDebug(PLUGIN_NAME, "scheme is %d", ret);
+
+  TSHandleMLocRelease(req_bufp, req_loc, url_loc);
+  return ret;
+}
+
 static std::string
 get_fake_host(std::string realhost){
-  std::string port = std::to_string(hoh_server_port);
-  std::string fakehost = "www.taobao.com:" + port;
+  // realhost can be www.dell.com:443
+  // return www.taobo.com
+  std::string fakehost;
   for (auto& k : host_remap){
     std::size_t index = realhost.find(k.first);
     if (index != std::string::npos){
       fakehost = realhost.replace(index, k.first.size(), k.second);
-      std::size_t idx = realhost.find(":");
-      if (idx != std::string::npos){
-        fakehost = fakehost.substr(0, idx);
-      } 
-      fakehost += ":";
-      fakehost += port;
-      return fakehost; 
+      return fakehost.substr(0, fakehost.find(":")); 
     }
   }
+  fakehost = "www.taobao.com";
   return fakehost;
   
 }
 
 static void
-set_server_info(TSHttpTxn txnp, IpEndpoint* ep){
+set_server_info(TSHttpTxn txnp, TSMBuffer req_bufp, TSMLoc req_loc, THOMAS_SCHEME scheme){
+
+  IpEndpoint* ep;
+  switch(scheme){
+  case THOMAS_HTTP:
+    ep = &hoh_server_addr;
+    break;
+  case THOMAS_HTTPS:
+    ep = &hohs_server_addr;
+    break;
+  default:
+    ep = NULL;
+    TSError("[%s] not supported scheme %d", PLUGIN_NAME, scheme);
+    break;
+  }
+  
   char ipstr[128] = {0};
   TSDebug(PLUGIN_NAME, "set server ip to %s", ats_ip_nptop(ep, ipstr, 128));
   TSHttpTxnServerAddrSet(txnp, &ep->sa);
@@ -291,8 +342,9 @@ update_header(TSHttpTxn txnp, TSCont contp ATS_UNUSED)
       std::string realhost = get_real_host(req_bufp, req_loc);
       TSDebug(PLUGIN_NAME, "client mode, realhost is %s, hohserver is %s", realhost.c_str(), hoh_server.c_str());
       add_host_to_via(req_bufp, req_loc, realhost);
-      set_server_info(txnp, &hoh_server_addr);
-      std::string fakehost = get_fake_host(realhost); // www.b.com:9090
+      THOMAS_SCHEME scheme = get_scheme(req_bufp, req_loc);
+      set_server_info(txnp, req_bufp, req_loc, scheme);
+      std::string fakehost = get_fake_host(realhost); // www.b.com:443
       TSDebug(PLUGIN_NAME,"fake host is %s", fakehost.c_str());
       update_host_in_url(req_bufp, req_loc, fakehost);
       update_host_name(req_bufp, req_loc, fakehost);
@@ -346,30 +398,57 @@ TSPluginInit(int argc, const char *argv[])
     }
 
     if (argc < 2) {
-      TSError("[%s] Usage: %s keyword [server_ip:port]|[null]", PLUGIN_NAME, argv[0]);
+      TSError("[%s] Usage: %s keyword [http_server_ip:port,https_server_ip:port]|[null]", PLUGIN_NAME, argv[0]);
       break;
     }
 
     keyword = argv[1];    // somekey
-    hoh_server = argv[2]; // 127.0.0.1:8080
+    hoh_server = argv[2]; // 127.0.0.1:8080,127.0.0.1:443
     hoh_server_mode = (hoh_server[0] == '0'|| (strncasecmp(hoh_server.c_str(), "null", 4) == 0));
     
-    std::size_t index = hoh_server.find(":");
-    //std::string server_addr =  hoh_server.substr(0, hoh_server.find(":"));
-    if (index != std::string::npos){
-      hoh_server_port = std::stoi(hoh_server.substr(index+1));
-    } else {
-      hoh_server_port = 8080;
-    }
-    
-    if (!hoh_server_mode && ats_ip_pton(hoh_server.c_str(), &hoh_server_addr)){
-      TSError("[%s] second para should be ipv4 format", PLUGIN_NAME);
-      break;
-    }
+    if (!hoh_server_mode){ 
+      std::string http_server;
+      std::string https_server;
+      std::size_t index = hoh_server.find(",");
+      if (index == std::string::npos){
+        TSError("[%s] Usage: para 2 format: http_server_ip:port,https_server_ip:port", PLUGIN_NAME);  
+        break;
+      }
+      http_server = hoh_server.substr(0, index);
+      https_server = hoh_server.substr(index + 1);
+      
+      index = http_server.find(":");
+      if (index != std::string::npos){
+        hoh_server_port = std::stoi(http_server.substr(index+1));
+      } else {
+        hoh_server_port = 8080;
+      }
 
+      index = https_server.find(":");
+      if (index != std::string::npos){
+        hohs_server_port = std::stoi(https_server.substr(index+1));
+      } else {
+        hohs_server_port = 443;
+      }
+
+
+      if (ats_ip_pton(http_server.c_str(), &hoh_server_addr)){
+        TSError("[%s] second para should be ipv4 format", PLUGIN_NAME);
+        break;
+      }
+
+      if (ats_ip_pton(https_server.c_str(), &hohs_server_addr)){
+        TSError("[%s] second para should be ipv4 format", PLUGIN_NAME);
+        break;
+      }
+    }
     build_host_remap();
-
-    TSDebug(PLUGIN_NAME, "keyword is %s, parent is %s, port is %d", keyword.c_str(), hoh_server.c_str(), hoh_server_addr.host_order_port());
+    
+    
+    char ipstr1[128];
+    char ipstr2[128];
+    TSDebug(PLUGIN_NAME, "keyword is %s, parent is %s and %s", keyword.c_str(),  
+                          ats_ip_nptop(&hoh_server_addr, ipstr1, 128), ats_ip_nptop(&hohs_server_addr, ipstr2, 128));
 
     /* Create a continuation with a mutex as there is a shared global structure
       containing the headers to add */
