@@ -60,11 +60,8 @@ then
   echo "dest_ip=*   ssl_cert_name=rootCA.crt  ssl_key_name=rootCA.key" >> ${INSTALL_DIR}/etc/trafficserver/ssl_multicert.config
 fi
 
-grep -E '^thomas_https.so' ${INSTALL_DIR}/etc/trafficserver/plugin.config
-if [ $? != 0 ]
-then
-  echo thomas_https.so >> ${INSTALL_DIR}/etc/trafficserver/plugin.config
-fi
+sed -i '/thomas_https.so/d' ${INSTALL_DIR}/etc/trafficserver/plugin.config
+echo thomas_https.so >> ${INSTALL_DIR}/etc/trafficserver/plugin.config
 cp ./create_cert.sh ${INSTALL_DIR}/etc/trafficserver/ssl/create_cert.sh
 
 sleep 10
