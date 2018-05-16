@@ -1,11 +1,8 @@
-It is not a joke, it is HTTP over HTTP, a new tunnel technology. You can find many tunnel technologies, including SOCKS, SSH, VPN etc. 
-The main idea of these tunnel technology is encryption, it encrypts information so hopefully none can decrypt it. OK, if I was the mid-man,
-I would block all transactions that I am unable to decrypt.
+It is not a joke, it is HTTP over HTTP, a new tunnel technology. You can find many tunnel technologies, including SOCKS, SSH, VPN etc. The main idea of these tunnel technology is encryption, it encrypts information so hopefully none can decrypt it. OK, if I was the mid-man, I would block all transactions that I am unable to decrypt.
 
-So HTTP over HTTP technology is not to keep information secret, it try to cheat the mid-man or security firewall, it hides the real 
-destination and information to HTTP message, basically it works in this way:
+So HTTP over HTTP technology is not to keep information secret, it try to cheat the mid-man or security firewall, it hides the real destination and information to HTTP message, basically it works in this way:
 
-client----GET google.com------>HOH-client==========GET baidu.com================>HOH-server------GET google.com---------->[google]
+client---GET google.com-->HOH-client==========GET baidu.com================>HOH-server----GET google.com----->[google]
 
 
 1. Mannually build steps:
@@ -30,7 +27,7 @@ client----GET google.com------>HOH-client==========GET baidu.com================
   docker run -dit -p 9090:8080 tzhangshare/hoh-client
   docker attach [container ID]
   install /opt/ats/etc/trafficserver/rootCA.crt for your browser.
-  vim /opt/ats/etc/trafficserver/plugin.config to change the default IP [10.203.108.10] to your server end IP
+  vim /opt/ats/etc/trafficserver/plugin.config. Change the default IP[10.203.108.10]to your server end IP
   ctl+p, ctl+q to exit
   set [hoh-client IP:9090] as your browser's proxy
 2.2 set up server end
