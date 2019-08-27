@@ -26,7 +26,7 @@ sudo apt-get install dante-server
 
 rm -fr /home/ubuntu/danted.conf
 cat <<EOT >> /home/ubuntu/danted.conf
-internal: eth0 port = 1043
+internal: eth0 port = 1080
 external: eth0
 socksmethod: none #username #none rfc931
 clientmethod: none
@@ -53,6 +53,25 @@ sudo rm -fr /etc/danted.conf
 sudo cp /home/ubuntu/danted.conf /etc/danted.conf
 sudo systemctl daemon-reload
 sudo systemctl restart danted
+
+
+rm -fr /home/ubuntu/config.json
+cat <<EOT >> /home/ubuntu/config.json
+{  
+  "server":"0.0.0.0",
+  "server_port":1043,
+  "local_address":"127.0.0.1",
+  "local_port":61080,
+  "password":"Baidu*ali!@#$1234",
+  "timeout":600,
+  "method":"camellia-256-cfb"
+}
+EOT
+sudo rm -fr /etc/shadowsocks/config.json
+sudo cp /home/ubuntu/config.json /etc/shadowsocks/config.json
+sudo systemctl daemon-reload
+sudo systemctl restart shadowsocks
+
 
 ## Front. install fake DNS
 sudo apt install python
