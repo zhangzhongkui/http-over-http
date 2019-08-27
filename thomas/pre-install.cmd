@@ -19,6 +19,40 @@ sudo chmod a+x /etc/init.d/trafficserver
 sudo systemctl daemon-reload
 sudo systemctl restart trafficserver
 
+
+
+## Front. danted
+sudo apt-get install dante-server
+
+rm -fr /home/ubuntu/danted.conf
+cat <<EOT >> /home/ubuntu/danted.conf
+internal: eth0 port = 1043
+external: eth0
+socksmethod: none #username #none rfc931
+clientmethod: none
+user.privileged: root
+user.unprivileged: nobody
+user.libwrap: nobody
+compatibility: sameport
+client pass {
+        from: 0.0.0.0/0 port 1-65535 to: 0.0.0.0/0
+        log: connect disconnect error
+}
+socks block {
+        from: 0.0.0.0/0 to: lo0
+        log: connect error
+}
+socks pass {
+        from: 0.0.0.0/0 to: 0.0.0.0/0
+        command: bind connect udpassociate
+        log: connect error
+}
+EOT
+
+sudo rm -fr /etc/danted.conf
+sudo cp /home/ubuntu/danted.conf /etc/danted.conf
+sudo systemctl restart danted
+
 ## Front. install fake DNS
 sudo apt install python
 sudo git clone https://github.com/LionSec/katoolin.git && sudo cp katoolin/katoolin.py /usr/bin/katoolin
