@@ -51,6 +51,7 @@ EOT
 
 sudo rm -fr /etc/danted.conf
 sudo cp /home/ubuntu/danted.conf /etc/danted.conf
+sudo systemctl daemon-reload
 sudo systemctl restart danted
 
 ## Front. install fake DNS
@@ -96,8 +97,8 @@ exit 0
 EOT
 sudo cp -f /home/ubuntu/dnschef /etc/init.d/dnschef
 sudo chmod a+x /etc/init.d/dnschef
-sudo systemctl daemon-reload
 sudo systemctl reset-failed
+sudo systemctl daemon-reload
 sudo systemctl start dnschef
 
 
