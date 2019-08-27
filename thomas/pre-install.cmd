@@ -25,7 +25,47 @@ sudo git clone https://github.com/LionSec/katoolin.git && sudo cp katoolin/katoo
 sudo chmod a+x /usr/bin/katoolin 
 sudo katoolin #install kali tool repo
 sudo apt-get install dnschef
-sudo nohup dnschef --fakeip 172.31.20.77&
+sudo touch /etc/dnschef.conf
+#sudo nohup dnschef --fakeip 172.31.20.77 --file /etc/dnschef.conf &
+rm -fr /home/ubuntu/dnschef
+cat <<EOT >> /home/ubuntu/dnschef
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:		dnschef
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		
+# Short-Description:	fake dns server
+### END INIT INFO
+set -e
+case "\$1" in
+  start)
+    dnschef --fakeip 172.31.20.77 --file /etc/dnschef.conf& >/dev/null 2>&1
+    ;;
+  stop)
+    kill -9 `pgrep -f dnschef`
+    ;;
+  reload|force-reload)
+    ;;
+  restart)
+    ;;
+  try-restart)
+    ;;
+  status)
+    ps -ef|grep python|grep dnschef
+    ;;
+  *)
+    exit 1
+esac
+exit 0
+EOT
+sudo cp -f /home/ubuntu/dnschef /etc/init.d/dnschef
+sudo chmod a+x /etc/init.d/dnschef
+sudo systemctl daemon-reload
+sudo systemctl reset-failed
+sudo systemctl start dnschef
+
 
 ## Front. point the front's dns server to fake dns
 sudo vim /etc/systemd/resolved.conf # add 127.0.0.1 to the file 
