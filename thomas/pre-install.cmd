@@ -13,6 +13,8 @@ autoreconf -if
 sudo make
 sudo make install
 chmod a+w academic-proxy-serial.txt
+sudo mkdir -p /opt/ts/var/certifier/certs
+chmod a+w /opt/ts/var/certifier/certs
 # rm config && ln -s config config
 sudo cp /opt/ts/bin/trafficserver /etc/init.d/trafficserver
 sudo chmod a+x /etc/init.d/trafficserver
@@ -26,14 +28,13 @@ sudo apt-get install dante-server
 
 rm -fr /home/ubuntu/danted.conf
 cat <<EOT >> /home/ubuntu/danted.conf
-internal: eth0 port = 1080
+internal: eth0 port = 61080
 external: eth0
 socksmethod: none #username #none rfc931
 clientmethod: none
 user.privileged: root
 user.unprivileged: nobody
 user.libwrap: nobody
-compatibility: sameport
 client pass {
         from: 0.0.0.0/0 port 1-65535 to: 0.0.0.0/0
         log: connect disconnect error
