@@ -26,7 +26,7 @@ client---GET google.com-->HOH-client==========GET baidu.com================>HOH-
 2.1 set up client end
   docker run -dit -p 9090:8080 tzhangshare/hoh-client
   docker attach [container ID]
-  install /opt/ats/etc/trafficserver/rootCA.crt for your browser.
+  install /opt/ats/etc/trafficserver/ssl/rootCA.crt for your browser.
   vim /opt/ats/etc/trafficserver/plugin.config. Change the default IP[10.203.108.10]to your server end IP
   ctl+p, ctl+q to exit
   set [hoh-client IP:9090] as your browser's proxy
